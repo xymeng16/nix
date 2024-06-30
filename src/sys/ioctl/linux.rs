@@ -6,7 +6,7 @@ use cfg_if::cfg_if;
 pub type ioctl_num_type = ::libc::c_int;
 #[cfg(not(any(target_os = "android", target_env = "musl")))]
 #[doc(hidden)]
-pub type ioctl_num_type = ::libc::c_ulong;
+pub type ioctl_num_type = ::libc::c_int;
 /// The datatype used for the 3rd argument
 #[doc(hidden)]
 pub type ioctl_param_type = ::libc::c_ulong;
