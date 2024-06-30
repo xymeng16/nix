@@ -18,7 +18,7 @@ use libc::{
 use std::io::{IoSlice, IoSliceMut};
 #[cfg(feature = "net")]
 use std::net;
-use std::os::unix::io::{AsFd, AsRawFd, FromRawFd, RawFd, OwnedFd};
+use std::os::unix::io::{AsFd, AsRawFd, FromRawFd, OwnedFd, RawFd};
 use std::{mem, ptr};
 
 #[deny(missing_docs)]
@@ -62,7 +62,11 @@ pub use crate::sys::socket::addr::netlink::NetlinkAddr;
 #[cfg(any(target_os = "ios", target_os = "macos"))]
 #[cfg(feature = "ioctl")]
 pub use crate::sys::socket::addr::sys_control::SysControlAddr;
-#[cfg(any(target_os = "android", target_os = "linux", target_os = "macos"))]
+#[cfg(any(
+    target_os = "android",
+    target_os = "linux",
+    target_os = "macos"
+))]
 pub use crate::sys::socket::addr::vsock::VsockAddr;
 
 #[cfg(all(feature = "uio", not(target_os = "redox")))]
@@ -1452,10 +1456,12 @@ impl<'a> ControlMessage<'a> {
     // Unsafe: cmsg must point to a valid cmsghdr with enough space to
     // encode self.
     unsafe fn encode_into(&self, cmsg: *mut cmsghdr) {
-        (*cmsg).cmsg_level = self.cmsg_level();
-        (*cmsg).cmsg_type = self.cmsg_type();
-        (*cmsg).cmsg_len = self.cmsg_len();
-        self.copy_to_cmsg_data(CMSG_DATA(cmsg));
+        unsafe {
+            (*cmsg).cmsg_level = self.cmsg_level();
+            (*cmsg).cmsg_type = self.cmsg_type();
+            (*cmsg).cmsg_len = self.cmsg_len();
+            self.copy_to_cmsg_data( CMSG_DATA(cmsg) );
+        }
     }
 }
 
@@ -2166,9 +2172,7 @@ pub fn socketpair<T: Into<Option<SockProtocol>>>(
     Errno::result(res)?;
 
     // Safe because socketpair returned success.
-    unsafe {
-        Ok((OwnedFd::from_raw_fd(fds[0]), OwnedFd::from_raw_fd(fds[1])))
-    }
+    unsafe { Ok((OwnedFd::from_raw_fd(fds[0]), OwnedFd::from_raw_fd(fds[1]))) }
 }
 
 /// Listen for connections on a socket
@@ -2276,13 +2280,7 @@ pub fn recvfrom<T: SockaddrLike>(
             &mut len as *mut socklen_t,
         ))? as usize;
 
-        Ok((
-            ret,
-            T::from_raw(
-                addr.assume_init().as_ptr(),
-                Some(len),
-            ),
-        ))
+        Ok((ret, T::from_raw(addr.assume_init().as_ptr(), Some(len))))
     }
 }
 
