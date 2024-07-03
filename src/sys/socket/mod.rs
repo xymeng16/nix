@@ -1459,7 +1459,7 @@ impl<'a> ControlMessage<'a> {
         unsafe {
             (*cmsg).cmsg_level = self.cmsg_level();
             (*cmsg).cmsg_type = self.cmsg_type();
-            (*cmsg).cmsg_len = self.cmsg_len();
+            (*cmsg).cmsg_len = self.cmsg_len() as u32;
             self.copy_to_cmsg_data( CMSG_DATA(cmsg) );
         }
     }
